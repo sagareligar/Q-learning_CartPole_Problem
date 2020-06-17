@@ -4,7 +4,7 @@ import math
 import sys
 import time 
 from Kalman import KalmanAngle
-
+import smbus
 from reinforcementLearner import *
 
 
@@ -73,7 +73,23 @@ def read_raw_data(addr):
         return value
 
 def read_variables_():
+	accX = read_raw_data(ACCEL_XOUT_H)
+	accY = read_raw_data(ACCEL_YOUT_H)
+	accZ = read_raw_data(ACCEL_ZOUT_H)
 
+
+
+	roll = math.atan(accY/math.sqrt((accX**2)+(accZ**2))) * radToDeg
+	pitch = math.atan2(-accX,accZ) * radToDeg
+	# print(roll)
+	kalmanX.setAngle(roll)
+	kalmanY.setAngle(pitch)
+
+	gyroXAngle = roll
+	gyroYAngle = pitch
+	compAngleX = roll
+	compAngleY = pitch
+        timer = time.time()
 	accX = read_raw_data(ACCEL_XOUT_H)
 	accY = read_raw_data(ACCEL_YOUT_H)
 	accZ = read_raw_data(ACCEL_ZOUT_H)
@@ -131,21 +147,7 @@ if __name__ == '__main__':
 
 	time.sleep(1)
 #Read Accelerometer raw value
-	accX = read_raw_data(ACCEL_XOUT_H)
-	accY = read_raw_data(ACCEL_YOUT_H)
-	accZ = read_raw_data(ACCEL_ZOUT_H)
 
-
-
-	roll = math.atan(accY/math.sqrt((accX**2)+(accZ**2))) * radToDeg
-	pitch = math.atan2(-accX,accZ) * radToDeg
-	# print(roll)
-	kalmanX.setAngle(roll)
-	kalmanY.setAngle(pitch)
-	gyroXAngle = roll;
-	gyroYAngle = pitch;
-	compAngleX = roll;
-	compAngleY = pitch;
 
 	
 	flag = 0
@@ -172,7 +174,7 @@ if __name__ == '__main__':
 
                 
                 now = int(time.time())
-                timer = time.time()
+                
                 # get start state
                 cart.t=read_variables_()
 
@@ -198,7 +200,7 @@ if __name__ == '__main__':
             if state < 0:
                 failed = True
                 failures += 1
-                print "Trial " + str(failures) + " was " + str(steps) + " steps or " + str(int(time()) - now) + " seconds"        
+                print "Trial " + str(failures) + " was " + str(steps) + " steps or " + str(int(time.time()) - now) + " seconds"        
                 steps = 0
                 # restart simulation and get initial start values
 
