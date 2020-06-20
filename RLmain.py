@@ -134,8 +134,8 @@ def read_variables_():
 	    gyroXAngle = kalAngleX
 	if ((gyroYAngle < -180) or (gyroYAngle > 180)):
 	    gyroYAngle = kalAngleY
-
-	return kalmanY
+        #print(compAngleY)
+	return compAngleY
 
 
 
@@ -176,11 +176,11 @@ if __name__ == '__main__':
                 now = int(time.time())
                 
                 # get start state
-                cart.t=read_variables_()
-
+                cart.t=read_variables_()                
+                #print(cart.t)
                 state = cart.get_state()
 
-
+            
             # guess new action depending on the weight of the current state
             action = (random.random()/((2**31) - 1) < (1.0 / (1.0 + math.exp(-max(-50, min(cart.action_weights[state], 50))))))
             if debug == 1:

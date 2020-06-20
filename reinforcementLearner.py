@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import RPi.GPIO as GPIO
-
+from pidcontroller import PIDController
 
 one_degree = 0.0174532    # 2pi/360
 six_degrees = 0.1047192
@@ -48,14 +48,42 @@ p.start(25)
 q.start(25)
 
 
+#This backward function takes a velocity argument that is the PID value. Both motors drives backward
+def backward(velocity):
+    if(velocity>100):
+    	velocity=100
+    GPIO.output(in1,GPIO.HIGH)
+    GPIO.output(in2,GPIO.LOW)
+    GPIO.output(in3,GPIO.LOW)
+    GPIO.output(in4,GPIO.HIGH)
+    p.ChangeDutyCycle(velocity)
+    q.ChangeDutyCycle(velocity)
 
 
+#Alike the backward funtion this forward function does the same thing but moves both the motors forward.
+def forward(velocity):
+    if(velocity>100):
+    	velocity=100
+    GPIO.output(in2,GPIO.HIGH)
+    GPIO.output(in1,GPIO.LOW)
+    GPIO.output(in4,GPIO.LOW)
+    GPIO.output(in3,GPIO.HIGH)
+    p.ChangeDutyCycle(velocity)
+    q.ChangeDutyCycle(velocity)
+
+
+#If the PID value is 0 (the Robot is 'balanced') it uses this equilibrium function.
+def equilibrium():
+    GPIO.output(in1,GPIO.LOW)
+    GPIO.output(in2,GPIO.LOW)
+    GPIO.output(in3,GPIO.LOW)
+    GPIO.output(in4,GPIO.LOW)
 
 
 class ReinforcementLearner():
 
     # initialize a new ReinforcementLearner with some default parameters
-  def __init__(self,alpha=1000, beta=0.5, gamma=0.95, lambda_w=0.9, lambda_v=0.8, max_failures=50, max_steps=1000000, max_distance=2.4, max_speed=1, max_angle_factor=12):
+  def __init__(self,alpha=1000, beta=0.5, gamma=0.95, lambda_w=0.9, lambda_v=0.8, max_failures=500, max_steps=1000000, max_distance=2.4, max_speed=1, max_angle_factor=12):
     self.n_states = 162         # 3x3x6x3 = 162 states
     self.alpha = alpha          # learning rate for action weights
     self.beta = beta            # learning rate for critic weights
@@ -158,6 +186,37 @@ class ReinforcementLearner():
       GPIO.output(in3,GPIO.HIGH)
       p.ChangeDutyCycle(100)
       q.ChangeDutyCycle(100)
+
+
+
+  def pid_action(self, pidvalue):
+    PID = PIDController(P=-40, I=1.0, D=5.0)
+    PIDx = PID.step(pidvalue)
+    if PIDx < 0.0:
+      backward(-float(PIDx))   
+
+    elif PIDx > 0.0:
+      forward(float(PIDx))
+
+
+    else:
+      equilibrium()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   # update all weights or reset them when failed
   def update_all_weights(self, rhat, failed):
